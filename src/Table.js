@@ -7,20 +7,36 @@ class Table extends React.Component {
         {name: 'Irina', city: 'Voronezh'}
     ];
 
+    constructor(props) {
+        super(props)
+        this.state = {
+            rows: this.tableData
+        };
+        this.addNewRecord = this.addNewRecord.bind(this);
+    }
+
+    addNewRecord() {
+        let currentRecord = this.state;
+        currentRecord.rows.push({name: 'Bruce', city: 'New-York'});
+        this.setState(currentRecord);
+    }
+
     render() {
         return (
             <div className="container">
                 <table className="table">
                     <thead>
-                        <th>
-                            Name
-                        </th>
-                        <th>
-                            City
-                        </th>
+                        <tr>
+                            <th>
+                                Name
+                            </th>
+                            <th>
+                                City
+                            </th>
+                        </tr>
                     </thead>
                     <tbody>
-                    {this.tableData.map((item) =>
+                    {this.state.rows.map((item) =>
                         <tr>
                             <td>{item.name}</td>
                             <td>{item.city}</td>
@@ -28,9 +44,12 @@ class Table extends React.Component {
                     )}
                     </tbody>
                 </table>
+                <button onClick={this.addNewRecord}>Добавить запись</button>
             </div>
         );
     }
+
+
 }
 
 export default Table;
