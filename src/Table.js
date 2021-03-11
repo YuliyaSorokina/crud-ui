@@ -1,5 +1,4 @@
 import React from 'react';
-import axios from 'axios'
 import TableService from './TableService'
 
 class Table extends React.Component {
@@ -7,23 +6,55 @@ class Table extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            rows: []
+            rows: [],
+            // Состояние таблицы. Принимает значения view для просмотра, create во время добавления записи,
+            // edit во время редактирования записи
+            mode: 'view',
+            tempName: undefined,
+            tempAge: undefined,
+            tempEmail: undefined
         };
-        this.addNewRecord = this.addNewRecord.bind(this);
+        this.setCreateMode = this.setCreateMode.bind(this);
+        this.saveRecord = this.saveRecord.bind(this);
         this.deleteRecord = this.deleteRecord.bind(this);
     }
 
     componentDidMount() {
-        TableService.getRecords().then(res => this.setState({rows: res.data}))
+        TableService.getRecords()
+            .then(res => this.setState({rows: res.data}))
     }
 
-    addNewRecord() {
-        let currentRecord = this.state;
-        currentRecord.rows.push({
-            _id: '6047365bae66af078a510r45',
-            data: {name: 'Bruce', age: 49, email: 'king@king.com'}
+    setCreateMode() {
+        this.setState({mode: 'create'});
+    }
+
+    onNameInputChange(event) {
+        const target = event.target;
+        const value = target.value;
+        const name = target.name;
+        this.setState({
+            [name]: value
         });
-        this.setState(currentRecord);
+    }
+
+    saveRecord() {
+        if (!this.state.tempName || !this.state.tempAge || !this.state.tempEmail ) {
+            alert("All fields are required");
+            return
+        }
+        let currentRecord = {
+            data: {name: this.state.tempName, age: this.state.tempAge, email: this.state.tempEmail}
+        };
+        TableService.addRecord(currentRecord)
+            .then(res => {
+                let currentRecord = this.state;
+                currentRecord.rows.push(res.data);
+                this.setState(currentRecord);
+                this.setState({mode: 'view'});
+                this.setState({tempName: undefined});
+                this.setState({tempAge: undefined});
+                this.setState({tempEmail: undefined});
+            });
     }
 
     deleteRecord(id) {
@@ -42,15 +73,9 @@ class Table extends React.Component {
                 <table className="table">
                     <thead>
                     <tr>
-                        <th>
-                            Name
-                        </th>
-                        <th>
-                            Age
-                        </th>
-                        <th>
-                            Email
-                        </th>
+                        <th>Name</th>
+                        <th>Age</th>
+                        <th>Email</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -60,13 +85,30 @@ class Table extends React.Component {
                             <td>{item.data.age}</td>
                             <td>{item.data.email}</td>
                             <td>
-                                <button onClick={() => this.deleteRecord(item._id)}>Удалить</button>
+                                { this.state.mode === 'view' &&
+                                <button onClick={() => this.deleteRecord(item._id)}>Delete</button>
+                                    }
                             </td>
                         </tr>
                     )}
+                    {this.state.mode === 'create' &&
+                        <tr>
+                            <td><input type="text" name="tempName" placeholder="name"
+                                       onChange={(e) => this.onNameInputChange(e)}/></td>
+                            <td><input type="text" name="tempAge" placeholder="age"
+                                       onChange={(e) => this.onNameInputChange(e)}/></td>
+                            <td><input type="text" name="tempEmail" placeholder="email"
+                                       onChange={(e) => this.onNameInputChange(e)}/></td>
+                            <td>
+                                <button onClick={() => this.saveRecord()}>Save</button>
+                            </td>
+                        </tr>
+                        }
                     </tbody>
                 </table>
-                <button onClick={this.addNewRecord}>Добавить запись</button>
+                { this.state.mode === 'view' &&
+                <button onClick={this.setCreateMode}>Add new record</button>
+                }
             </div>
         );
     }

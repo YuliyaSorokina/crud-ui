@@ -7,7 +7,7 @@ class TableService {
     };
 
     addRecord(record) {
-
+        return axios.put('http://178.128.196.163:3000/api/records/', record);
     };
 
     deleteRecord(id) {
