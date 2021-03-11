@@ -1,23 +1,24 @@
 import React from 'react';
+import axios from 'axios'
 
 class Table extends React.Component {
-    tableData = [
-        {name: 'Ivan', city: 'Moscow'},
-        {name: 'Mike', city: 'LA'},
-        {name: 'Irina', city: 'Voronezh'}
-    ];
 
     constructor(props) {
         super(props)
         this.state = {
-            rows: this.tableData
+            rows: []
         };
         this.addNewRecord = this.addNewRecord.bind(this);
     }
 
+    componentDidMount() {
+        axios.get('http://178.128.196.163:3000/api/records')
+            .then(response => this.setState({rows: response.data}))
+    }
+
     addNewRecord() {
         let currentRecord = this.state;
-        currentRecord.rows.push({name: 'Bruce', city: 'New-York'});
+        currentRecord.rows.push({_id: '6047365bae66af078a510r45', data: {name: 'Bruce', age: 49, email: 'king@king.com'}});
         this.setState(currentRecord);
     }
 
@@ -26,20 +27,24 @@ class Table extends React.Component {
             <div className="container">
                 <table className="table">
                     <thead>
-                        <tr>
-                            <th>
-                                Name
-                            </th>
-                            <th>
-                                City
-                            </th>
-                        </tr>
+                    <tr>
+                        <th>
+                            Name
+                        </th>
+                        <th>
+                            Age
+                        </th>
+                        <th>
+                            Email
+                        </th>
+                    </tr>
                     </thead>
                     <tbody>
                     {this.state.rows.map((item) =>
-                        <tr>
-                            <td>{item.name}</td>
-                            <td>{item.city}</td>
+                        <tr key={item._id}>
+                            <td>{item.data.name}</td>
+                            <td>{item.data.age}</td>
+                            <td>{item.data.email}</td>
                         </tr>
                     )}
                     </tbody>
@@ -48,8 +53,6 @@ class Table extends React.Component {
             </div>
         );
     }
-
-
 }
 
 export default Table;
