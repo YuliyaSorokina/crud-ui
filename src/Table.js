@@ -26,7 +26,7 @@ class Table extends React.Component {
 
     componentDidMount() {
         TableService.getRecords()
-            .then(res => this.setState({rows: res.data}))
+            .then(res => this.setState({rows: res.data}));
     }
 
     saveRecord() {
@@ -93,11 +93,13 @@ class Table extends React.Component {
     }
 
     setEditMode(record) {
-        this.setState({mode: 'edit'});
-        this.setState({editId: record._id});
-        this.setState({tempName: record.data.name});
-        this.setState({tempAge: record.data.age});
-        this.setState({tempEmail: record.data.email});
+        let currentState = this.state;
+        currentState.mode = 'edit';
+        currentState.editId = record._id;
+        currentState.tempName = record.data.name;
+        currentState.tempAge = record.data.age;
+        currentState.tempEmail = record.data.email;
+        this.setState(currentState);
     }
 
     clearTempData() {
@@ -119,54 +121,72 @@ class Table extends React.Component {
                         <th>Name</th>
                         <th>Age</th>
                         <th>Email</th>
+                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     {this.state.rows.map((item) =>
                         this.state.mode === 'edit' && this.state.editId === item._id
-                            ?   <tr key={item._id}>
-                                    <td><input type="text" name="tempName" placeholder={item.data.name}
-                                               defaultValue={item.data.name} onChange={(e) => this.onNameInputChange(e)}/>
+                            ? <tr key={item._id}>
+                                <td><input type="text" name="tempName" className="form-control" placeholder={item.data.name}
+                                           defaultValue={item.data.name} autoFocus
+                                           onChange={(e) => this.onNameInputChange(e)}/>
+                                </td>
+                                <td><input type="text" name="tempAge" className="form-control" placeholder={item.data.age}
+                                           defaultValue={item.data.age} onChange={(e) => this.onNameInputChange(e)}/>
+                                </td>
+                                <td><input type="email" name="tempEmail" className="form-control"
+                                           placeholder={item.data.email}
+                                           defaultValue={item.data.email} onChange={(e) => this.onNameInputChange(e)}/>
+                                </td>
+                                <td>
+                                    <button type="button" className="btn btn-success"
+                                            onClick={() => this.updateRecord()}>Update
+                                    </button>
+                                    <button type="button" className="btn btn-secondary ml-1"
+                                            onClick={() => this.clearTempData()}>Cancel
+                                    </button>
+                                </td>
+                            </tr>
+                            : <tr key={item._id}>
+                                <td>{item.data.name}</td>
+                                <td>{item.data.age}</td>
+                                <td>{item.data.email}</td>
+                                {this.state.mode === 'view'
+                                    ? <td>
+                                        <button type="button" className="btn btn-primary mr-1"
+                                                onClick={() => this.setEditMode(item)}>Edit
+                                        </button>
+                                        <button type="button" className="btn btn-danger"
+                                                onClick={() => this.deleteRecord(item._id)}>Delete
+                                        </button>
                                     </td>
-                                    <td><input type="text" name="tempAge" placeholder={item.data.age}
-                                               defaultValue={item.data.age} onChange={(e) => this.onNameInputChange(e)}/>
-                                    </td>
-                                    <td><input type="text" name="tempEmail" placeholder={item.data.email}
-                                               defaultValue={item.data.email} onChange={(e) => this.onNameInputChange(e)}/>
-                                    </td>
-                                    <td>
-                                        <button onClick={() => this.updateRecord()}>Update</button>
-                                    </td>
-                                </tr>
-                            :   <tr key={item._id}>
-                                    <td>{item.data.name}</td>
-                                    <td>{item.data.age}</td>
-                                    <td>{item.data.email}</td>
-                                    {this.state.mode === 'view' &&
-                                        <td>
-                                            <button onClick={() => this.setEditMode(item)}>Edit</button>
-                                            <button onClick={() => this.deleteRecord(item._id)}>Delete</button>
-                                        </td>
-                                    }
-                                </tr>
+                                    : <td></td>
+                                }
+                            </tr>
                     )}
                     {this.state.mode === 'create' &&
-                        <tr>
-                            <td><input type="text" name="tempName" placeholder="name"
-                                       onChange={(e) => this.onNameInputChange(e)}/></td>
-                            <td><input type="text" name="tempAge" placeholder="age"
-                                       onChange={(e) => this.onNameInputChange(e)}/></td>
-                            <td><input type="text" name="tempEmail" placeholder="email"
-                                       onChange={(e) => this.onNameInputChange(e)}/></td>
-                            <td>
-                                <button onClick={() => this.saveRecord()}>Save</button>
-                            </td>
-                        </tr>
+                    <tr>
+                        <td><input type="text" name="tempName" className="form-control" autoFocus placeholder="name"
+                                   onChange={(e) => this.onNameInputChange(e)}/></td>
+                        <td><input type="text" name="tempAge" className="form-control" placeholder="age"
+                                   onChange={(e) => this.onNameInputChange(e)}/></td>
+                        <td><input type="text" name="tempEmail" className="form-control" placeholder="email"
+                                   onChange={(e) => this.onNameInputChange(e)}/></td>
+                        <td>
+                            <button type="button" className="btn btn-success" onClick={() => this.saveRecord()}>Save
+                            </button>
+                            <button type="button" className="btn btn-secondary ml-1"
+                                    onClick={() => this.clearTempData()}>Cancel
+                            </button>
+                        </td>
+                    </tr>
                     }
                     </tbody>
                 </table>
                 {this.state.mode === 'view' &&
-                    <button onClick={this.setCreateMode}>Add new record</button>
+                <button type="button" className="btn btn-outline-dark" onClick={this.setCreateMode}>Add new
+                    record</button>
                 }
             </div>
         );
