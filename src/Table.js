@@ -12,11 +12,16 @@ class Table extends React.Component {
             mode: 'view',
             tempName: undefined,
             tempAge: undefined,
-            tempEmail: undefined
+            tempEmail: undefined,
+            editId: undefined
         };
-        this.setCreateMode = this.setCreateMode.bind(this);
+
         this.saveRecord = this.saveRecord.bind(this);
+        this.updateRecord = this.updateRecord.bind(this);
         this.deleteRecord = this.deleteRecord.bind(this);
+        this.setCreateMode = this.setCreateMode.bind(this);
+        this.setEditMode = this.setEditMode.bind(this);
+        this.clearTempData = this.clearTempData.bind(this);
     }
 
     componentDidMount() {
@@ -24,8 +29,54 @@ class Table extends React.Component {
             .then(res => this.setState({rows: res.data}))
     }
 
-    setCreateMode() {
-        this.setState({mode: 'create'});
+    saveRecord() {
+        if (!this.state.tempName || !this.state.tempAge || !this.state.tempEmail) {
+            alert("All fields are required");
+            return
+        }
+        let currentRecord = {
+            data: {name: this.state.tempName, age: this.state.tempAge, email: this.state.tempEmail}
+        };
+        TableService.addRecord(currentRecord)
+            .then(res => {
+                    let currentState = this.state;
+                    currentState.rows.push(res.data);
+                    this.clearTempData();
+                    this.setState(currentState);
+                }
+            )
+            .catch(reason => {
+                console.error(reason)
+            })
+    }
+
+    updateRecord() {
+        let currentRecord = {
+            data: {name: this.state.tempName, age: this.state.tempAge, email: this.state.tempEmail}
+        };
+        TableService.updateRecord(this.state.editId, currentRecord)
+            .then(res => {
+                let currentState = this.state;
+                let updatedRecordIdx = currentState.rows.findIndex(row => row._id === this.state.editId);
+                if (updatedRecordIdx !== -1) {
+                    currentState.rows[updatedRecordIdx].data = currentRecord.data;
+                    this.clearTempData();
+                    this.setState(currentState);
+                }
+            })
+            .catch(reason => {
+                console.error(reason)
+            })
+    }
+
+    deleteRecord(id) {
+        TableService.deleteRecord(id)
+            .then(res => {
+                this.setState({rows: this.state.rows.filter(rows => rows._id !== id)});
+            })
+            .catch(reason => {
+                console.error(reason)
+            });
     }
 
     onNameInputChange(event) {
@@ -37,34 +88,26 @@ class Table extends React.Component {
         });
     }
 
-    saveRecord() {
-        if (!this.state.tempName || !this.state.tempAge || !this.state.tempEmail ) {
-            alert("All fields are required");
-            return
-        }
-        let currentRecord = {
-            data: {name: this.state.tempName, age: this.state.tempAge, email: this.state.tempEmail}
-        };
-        TableService.addRecord(currentRecord)
-            .then(res => {
-                let currentRecord = this.state;
-                currentRecord.rows.push(res.data);
-                this.setState(currentRecord);
-                this.setState({mode: 'view'});
-                this.setState({tempName: undefined});
-                this.setState({tempAge: undefined});
-                this.setState({tempEmail: undefined});
-            });
+    setCreateMode() {
+        this.setState({mode: 'create'});
     }
 
-    deleteRecord(id) {
-        TableService.deleteRecord(id)
-            .then(res => {
-                this.setState({rows: this.state.rows.filter(rows => rows._id !== id)});
-            })
-            .catch(reason => {
-                console.error(reason)
-            });
+    setEditMode(record) {
+        this.setState({mode: 'edit'});
+        this.setState({editId: record._id});
+        this.setState({tempName: record.data.name});
+        this.setState({tempAge: record.data.age});
+        this.setState({tempEmail: record.data.email});
+    }
+
+    clearTempData() {
+        let currentState = this.state;
+        currentState.mode = 'view';
+        currentState.tempName = undefined;
+        currentState.tempAge = undefined;
+        currentState.tempEmail = undefined;
+        currentState.editId = undefined;
+        this.setState(currentState);
     }
 
     render() {
@@ -80,16 +123,32 @@ class Table extends React.Component {
                     </thead>
                     <tbody>
                     {this.state.rows.map((item) =>
-                        <tr key={item._id}>
-                            <td>{item.data.name}</td>
-                            <td>{item.data.age}</td>
-                            <td>{item.data.email}</td>
-                            <td>
-                                { this.state.mode === 'view' &&
-                                <button onClick={() => this.deleteRecord(item._id)}>Delete</button>
+                        this.state.mode === 'edit' && this.state.editId === item._id
+                            ?   <tr key={item._id}>
+                                    <td><input type="text" name="tempName" placeholder={item.data.name}
+                                               defaultValue={item.data.name} onChange={(e) => this.onNameInputChange(e)}/>
+                                    </td>
+                                    <td><input type="text" name="tempAge" placeholder={item.data.age}
+                                               defaultValue={item.data.age} onChange={(e) => this.onNameInputChange(e)}/>
+                                    </td>
+                                    <td><input type="text" name="tempEmail" placeholder={item.data.email}
+                                               defaultValue={item.data.email} onChange={(e) => this.onNameInputChange(e)}/>
+                                    </td>
+                                    <td>
+                                        <button onClick={() => this.updateRecord()}>Update</button>
+                                    </td>
+                                </tr>
+                            :   <tr key={item._id}>
+                                    <td>{item.data.name}</td>
+                                    <td>{item.data.age}</td>
+                                    <td>{item.data.email}</td>
+                                    {this.state.mode === 'view' &&
+                                        <td>
+                                            <button onClick={() => this.setEditMode(item)}>Edit</button>
+                                            <button onClick={() => this.deleteRecord(item._id)}>Delete</button>
+                                        </td>
                                     }
-                            </td>
-                        </tr>
+                                </tr>
                     )}
                     {this.state.mode === 'create' &&
                         <tr>
@@ -103,11 +162,11 @@ class Table extends React.Component {
                                 <button onClick={() => this.saveRecord()}>Save</button>
                             </td>
                         </tr>
-                        }
+                    }
                     </tbody>
                 </table>
-                { this.state.mode === 'view' &&
-                <button onClick={this.setCreateMode}>Add new record</button>
+                {this.state.mode === 'view' &&
+                    <button onClick={this.setCreateMode}>Add new record</button>
                 }
             </div>
         );

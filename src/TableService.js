@@ -15,7 +15,7 @@ class TableService {
     };
 
     updateRecord(id, record) {
-
+        return axios.post('http://178.128.196.163:3000/api/records/' + id, record);
     };
 }
 
